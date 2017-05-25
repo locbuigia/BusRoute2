@@ -48,6 +48,7 @@ import java.util.StringTokenizer;
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener {
 
+    //Master Branch
     private static final String Key_Search = "name";
 
     private GoogleMap mMap;
