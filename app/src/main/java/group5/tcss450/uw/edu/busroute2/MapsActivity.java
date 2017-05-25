@@ -447,7 +447,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 {
                     Log.d("Index ", i + "");
                     Log.d("Word ", listOfWords.get(i));
-                    word = listOfWords.get(i);
+                    word = word + " " +  listOfWords.get(i);
                     size.add(i);
                 }
             }
@@ -458,7 +458,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
             // mTextView.setText(mFinal.toString());
             mTextView.setText(sb.toString());
-
+            Log.d("Final Word is ", word);
             display(word);
         }
     }
