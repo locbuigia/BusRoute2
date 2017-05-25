@@ -205,17 +205,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             mMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
                 @Override
                 public void onInfoWindowClick(Marker marker) {
-                    DataParser dp;
+                    BusParser dp;
                     dp = getNearbyPlacesData.mList.get(getNearbyPlacesData.mPubMarkerMap.get(marker));
                     Intent intent = new Intent(getApplication(), DetailActivity.class);
 
-                    Location desti = new Location("Destination");
-                    desti.setLatitude(Double.parseDouble(dp.getLat()));
-                    desti.setLongitude(Double.parseDouble(dp.getLng()));
-
-                    intent.putExtra("name", dp.getName());
-                    intent.putExtra("vicinity", dp.getVicinity());
-                    intent.putExtra("rating", dp.getRating());
+                    intent.putExtra("name", dp.getBus());
+//                    intent.putExtra("vicinity", dp.getVicinity());
+//                    intent.putExtra("rating", dp.getRating());
 
                     startActivity(intent);
                 }
@@ -285,14 +281,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    private String getUrlText(double latitude, double longitude, String query) {
-        StringBuilder googlePlacesUrl = new StringBuilder("https://maps.googleapis.com/maps/api/place/textsearch/json?");
-        googlePlacesUrl.append("query=" + removeSpace(query));
-        googlePlacesUrl.append("&key=" + "AIzaSyCfUf81B45d045Yf-9PiCtlF7RXQN9tr7I");
-        googlePlacesUrl.append("&location=" + latitude + "," + longitude);
-        googlePlacesUrl.append("&radius=" + 400);
+    private String getUrlText() {
+        StringBuilder googlePlacesUrl = new StringBuilder("https://maps.googleapis.com/maps/api/directions/json?");
+        googlePlacesUrl.append("origin=Seattle");
+        googlePlacesUrl.append("&destination=RentonLanding");
+        googlePlacesUrl.append("&mode=transit");
+        googlePlacesUrl.append("&key=" + "AIzaSyDoMVUGh6iGgKWautnSKitf2KpLGEM_oKM");
         Log.d("getUrl", googlePlacesUrl.toString());
-        caseToParse = 2;
         return (googlePlacesUrl.toString());
     }
 
@@ -321,7 +316,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void display(String theLocation) {
-        String url = getUrlText(latitude, longitude, theLocation);
+        String url = getUrlText();
         Object[] DataTransfer = new Object[2];
         DataTransfer[0] = mMap;
         DataTransfer[1] = url;
@@ -331,13 +326,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
             @Override
             public void onInfoWindowClick(Marker marker) {
-                DataParser dp;
+                BusParser dp;
                 dp = getNearbyPlacesData.mList.get(getNearbyPlacesData.mPubMarkerMap.get(marker));
                 Intent intent = new Intent(getApplication(), DetailActivity.class);
 
-                intent.putExtra("name", dp.getName());
-                intent.putExtra("vicinity", dp.getVicinity());
-                intent.putExtra("rating", dp.getRating());
+                intent.putExtra("name", dp.getBus());
 
                 startActivity(intent);
             }
@@ -348,6 +341,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
+
         }
 
         @Override
@@ -462,4 +456,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             display(word);
         }
     }
+
+
 }

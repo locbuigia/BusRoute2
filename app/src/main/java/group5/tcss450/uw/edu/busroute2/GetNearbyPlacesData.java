@@ -67,18 +67,10 @@ public class GetNearbyPlacesData extends AsyncTask<Object, String, String>{
     private double rating;
 
     /*
-     * Open Now?
-     */
-
-    private String openNow;
-
-    /*
      * List of the data that has been parsed.
      */
 
-    public static List<DataParser> mList;
-
-    public static List<String> mListName;
+    public static List<BusParser> mList;
 
     /*
      * Hashmap of the location markers.
@@ -112,10 +104,10 @@ public class GetNearbyPlacesData extends AsyncTask<Object, String, String>{
     @Override
     protected void onPostExecute(String result) {
         Log.d("GooglePlacesReadTask", "onPostExecute Entered");
-        List<DataParser> nearbyPlacesList;
-        DataParser dataParser = new DataParser();
-        nearbyPlacesList =  dataParser.parse(result, MapsActivity.caseToParse);
-        showNearbyPlaces(nearbyPlacesList);
+        List<BusParser> nearbyPlacesList;
+        BusParser busParser = new BusParser();
+        nearbyPlacesList =  busParser.parse(result);
+        showBusRoutes(nearbyPlacesList);
         Log.d("GooglePlacesReadTask", "onPostExecute Exit");
     }
 
@@ -123,25 +115,39 @@ public class GetNearbyPlacesData extends AsyncTask<Object, String, String>{
      * Shows the nearby gas stations.
      */
 
-    private void showNearbyPlaces(List<DataParser> nearbyPlacesList) {
+//    private void showNearbyPlaces(List<DataParser> nearbyPlacesList) {
+//        mList = new ArrayList<>();
+//        for (int i = 0; i < nearbyPlacesList.size(); i++) {
+//            Log.d("onPostExecute","Entered into showing locations");
+//            MarkerOptions markerOptions = new MarkerOptions();
+//            DataParser googlePlace = nearbyPlacesList.get(i);
+//            lat = Double.parseDouble(googlePlace.getLat());
+//            lng = Double.parseDouble(googlePlace.getLng());
+//            name = googlePlace.getName();
+//            vicinity = googlePlace.getVicinity();
+//            rating = googlePlace.getRating();
+//            DataParser dataParser = new DataParser(name, vicinity,
+//                    googlePlace.getLat(), googlePlace.getLng(), rating);
+//            mList.add(dataParser);
+//            Log.d("mList:", " " + mList.get(i).getName());
+//            markerOptions.position(new LatLng(lat,lng));
+//            markerOptions.title(dataParser.getName());
+//            Marker mark = mMap.addMarker(markerOptions);
+//            mPubMarkerMap.put(mark, i);
+//        }
+//    }
+
+    private void showBusRoutes(List<BusParser> busRoutesList) {
         mList = new ArrayList<>();
-        mListName = new ArrayList<>();
-        for (int i = 0; i < nearbyPlacesList.size(); i++) {
+        for (int i = 0; i < busRoutesList.size(); i++) {
             Log.d("onPostExecute","Entered into showing locations");
             MarkerOptions markerOptions = new MarkerOptions();
-            DataParser googlePlace = nearbyPlacesList.get(i);
-            lat = Double.parseDouble(googlePlace.getLat());
-            lng = Double.parseDouble(googlePlace.getLng());
-            name = googlePlace.getName();
-            vicinity = googlePlace.getVicinity();
-            rating = googlePlace.getRating();
-            DataParser dataParser = new DataParser(name, vicinity,
-                    googlePlace.getLat(), googlePlace.getLng(), rating);
-            mList.add(dataParser);
-            mListName.add(mList.get(i).getName());
-            Log.d("mList:", " " + mList.get(i).getName());
+            BusParser busRoute = busRoutesList.get(i);
+            name = busRoute.getBus();
+            mList.add(busRoute);
+            Log.d("mList:", " " + mList.get(i).getBus());
             markerOptions.position(new LatLng(lat,lng));
-            markerOptions.title(dataParser.getName());
+            markerOptions.title(busRoute.getBus());
             Marker mark = mMap.addMarker(markerOptions);
             mPubMarkerMap.put(mark, i);
         }
