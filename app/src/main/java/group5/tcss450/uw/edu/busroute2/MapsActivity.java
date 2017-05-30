@@ -65,7 +65,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final String TAG = "LocationsActivity";
     private static final String KEY_DB = "DB";
 
-
     private LocationRequest mLocationRequest;
 
     String place;
