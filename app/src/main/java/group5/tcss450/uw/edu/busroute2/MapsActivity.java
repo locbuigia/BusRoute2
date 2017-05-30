@@ -1,8 +1,6 @@
 package group5.tcss450.uw.edu.busroute2;
 
 import android.Manifest;
-import android.annotation.TargetApi;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.AsyncTask;
@@ -14,7 +12,6 @@ import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.util.StringBuilderPrinter;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -24,11 +21,8 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 
 import org.apache.http.HttpEntity;
@@ -69,15 +63,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     String place;
     String name;
-    public static int caseToParse;
-
-
     private TextView mTextView;
-
     private TextView mOrigin;
     private TextView mDestination;
     private TextView mBusRoute;
-
     private EditText mEditText;
     private ArrayList<String> listOfWords = new ArrayList<>();
     private String mString;
@@ -102,10 +91,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             checkLocationPermission();
         }
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-//        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-//                .findFragmentById(R.id.map);
-//        mapFragment.getMapAsync(this);
 
         place = getIntent().getStringExtra("type");
         name = getIntent().getStringExtra("name");
@@ -260,7 +245,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         Log.d("onClick", "Button is Clicked");
         mString = mEditText.getText().toString();
         listOfWords.clear();
-//        mMap.clear();
         AsyncTask<String, Void, String> task = new PostWebServiceTask();
 
         task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, mURL);
@@ -294,16 +278,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 String sent = mString;
 
-
-
                 //Request Body
                 StringEntity reqEntity = new StringEntity("{\"language\" : \"en\",\n" +
                         "\t\"analyzerIds\" : [\"4fa79af1-f22c-408d-98bb-b7d7aeef7f04\", \"22a6b758-420f-4745-8a3c-46835a67c0d2\"],\n" +
                         "\t\"text\" :" + "\""+ sent  +"\"}" );
                 request.setEntity(reqEntity);
-
-
-
 
                 HttpResponse response = httpclient.execute(request);
                 entity = response.getEntity();
@@ -319,7 +298,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
             catch (Exception e)
             {
-
                 String result = "Unable to connect, Reason: " + e.getMessage();
                 return e.getMessage();
             }
@@ -380,10 +358,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             for(int i = 0; i< size.size();i++ ) {
                 mFinal.append(listOfWords.get(size.get(i)));
             }
-            // mTextView.setText(mFinal.toString());
             mTextView.setText("Tags = " + sb.toString());
             Log.d("Final Word is ", word);
-//            destination = word;
             mDestination.setText("Destination = " + destination);
 
 
@@ -392,14 +368,52 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             DataTransfer[0] = url;
             Log.d("onClick", url);
 
-            GetNearbyPlacesData getNearbyPlacesData = new GetNearbyPlacesData();
-//            if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.HONEYCOMB) {
-//                getNearbyPlacesData.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, DataTransfer);
-//            }
-//            else {
-//                getNearbyPlacesData.execute(DataTransfer);
-//            }
-            getNearbyPlacesData.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, DataTransfer);
+            AsyncTask<Object, String, String> task = new GetNearbyPlacesData();
+            task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, DataTransfer);
+        }
+    }
+
+    public static List<BusParser> mList;
+    private String url;
+    private String googlePlacesData;
+
+    private class GetNearbyPlacesData extends AsyncTask<Object, String, String> {
+
+        @Override
+        protected String doInBackground(Object... params) {
+            try {
+                Log.d("GetNearbyPlacesData", "doInBackground entered");
+                url = (String) params[0];
+                DownloadUrl downloadUrl = new DownloadUrl();
+                googlePlacesData = downloadUrl.readUrl(url);
+                Log.d("GooglePlacesReadTask", "doInBackground Exit");
+            } catch (Exception e) {
+                Log.d("GooglePlacesReadTask", e.toString());
+            }
+            return googlePlacesData;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            Log.d("GooglePlacesReadTask", "onPostExecute Entered");
+            List<BusParser> nearbyPlacesList;
+            BusParser busParser = new BusParser();
+            nearbyPlacesList =  busParser.parse(result);
+            showBusRoutes(nearbyPlacesList);
+            Log.d("GooglePlacesReadTask", "onPostExecute Exit");
+        }
+
+        private void showBusRoutes(List<BusParser> busRoutesList) {
+            mList = new ArrayList<>();
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < busRoutesList.size(); i++) {
+                BusParser busRoute = busRoutesList.get(i);
+                mList.add(busRoute);
+                sb.append(busRoute.getBus());
+                sb.append(" ");
+                Log.d("Bus Routes Maps", busRoute.getBus());
+            }
+            mBusRoute.setText(sb.toString());
         }
     }
 }
