@@ -16,14 +16,7 @@ public class News {
      * Language from JSON
      */
     private String mResult;
-//    /**
-//     * Kind from JSON
-//     */
-//    private String mKind;
-//    /**
-//     * Specifications from JSON
-//     */
-//    private String mSpecs;
+
     /**
      * Implementation from JSON
      */

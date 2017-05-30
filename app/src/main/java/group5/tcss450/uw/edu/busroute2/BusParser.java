@@ -21,24 +21,6 @@ public class BusParser implements Serializable{
 
     private String mBusRoute;
 
-    /*
-     * The address the station.
-     */
-
-    private String mVicinity;
-
-    /*
-     * The latitude and longitude of the station.
-     */
-
-    private String mLat, mLng;
-
-    /*
-     * The rating given to the gas station.
-     */
-
-    private double mRating;
-
 
     /*
      * Constructor of the for the data.
@@ -84,18 +66,29 @@ public class BusParser implements Serializable{
                     JSONArray legs = object.getJSONArray("legs");
                     JSONObject temp1 = legs.getJSONObject(0);
                     JSONArray steps = temp1.getJSONArray("steps");
-                    for (int j = 1; j < steps.length(); j+=2) {
-                        JSONObject transit_detail = steps.getJSONObject(j-1);
-                        JSONObject temp = transit_detail.getJSONObject("transit_details");
-                        JSONObject line = temp.getJSONObject("line");
-                        Log.d("Temp1 ", line.toString());
-//                        String busRoute = line.getString("short_name");
+
+                    for (int j = 0; j < steps.length(); j++) {
+                        JSONObject transit_detail = steps.getJSONObject(j);
+                        JSONObject temp = null;
+                        try {
+                            temp = transit_detail.getJSONObject("transit_details");
+                        } catch (JSONException e){
+                            e.getMessage();
+                        }
+
+                        if (temp != null) {
+                            JSONObject line = temp.getJSONObject("line");
+                            String busRoute;
+                            try {
+                                busRoute = line.getString("short_name");
+                            } catch (JSONException e) {
+                                JSONObject vehicle = line.getJSONObject("vehicle");
+                                busRoute = vehicle.getString("name");
+                            }
+                            BusParser bus = new BusParser(busRoute);
+                            list.add(bus);
+                        }
                     }
-
-
-//                    BusParser bus = new BusParser(busRoute);
-//
-//                    list.add(bus);
                 }
             }
         } catch (JSONException e) {

@@ -1,6 +1,7 @@
 package group5.tcss450.uw.edu.busroute2;
 
 import android.Manifest;
+import android.annotation.TargetApi;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -13,6 +14,7 @@ import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.util.StringBuilderPrinter;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -43,6 +45,7 @@ import org.json.JSONObject;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback,
@@ -72,9 +75,15 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private TextView mTextView;
 
+    private TextView mOrigin;
+    private TextView mDestination;
+    private TextView mBusRoute;
+
     private EditText mEditText;
     private ArrayList<String> listOfWords = new ArrayList<>();
     private String mString;
+    private String origin;
+    private String destination;
 
     /**
      * url to connect to our API.
@@ -95,27 +104,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             checkLocationPermission();
         }
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
+//        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+//                .findFragmentById(R.id.map);
+//        mapFragment.getMapAsync(this);
 
         place = getIntent().getStringExtra("type");
         name = getIntent().getStringExtra("name");
 
         mTextView = (TextView) findViewById(R.id.Text_View);
+        mOrigin = (TextView) findViewById(R.id.origin);
+        mDestination = (TextView) findViewById(R.id.destination);
+        mBusRoute = (TextView) findViewById(R.id.busRoutes);
         mEditText = (EditText) findViewById(R.id.search_field);
-    }
-
-    private String getUrl(double latitude, double longitude, String nearbyPlace) {
-        StringBuilder googlePlacesUrl = new StringBuilder("https://maps.googleapis.com/maps/api/place/nearbysearch/json?");
-        googlePlacesUrl.append("location=" + latitude + "," + longitude);
-        googlePlacesUrl.append("&radius=" + 4000);
-        googlePlacesUrl.append("&type=" + nearbyPlace);
-        googlePlacesUrl.append("&sensor=true");
-        googlePlacesUrl.append("&key=" + "AIzaSyCfUf81B45d045Yf-9PiCtlF7RXQN9tr7I");
-        caseToParse = 1;
-        Log.d("getUrl", googlePlacesUrl.toString());
-        return (googlePlacesUrl.toString());
     }
 
     protected synchronized void buildGoogleApiClient() {
@@ -178,46 +178,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         Location lastLocation = new Location("Last Location");
         lastLocation.setLatitude(latitude);
         lastLocation.setLongitude(longitude);
-        if (location.distanceTo(lastLocation) > 1000) {
-            //Place current location marker
-            latitude = location.getLatitude();
-            longitude = location.getLongitude();
-            LatLng latlng = new LatLng(latitude, longitude);
-            Log.d("lat:" , "" + latitude);
-            Log.d("lng:" , "" + longitude);
-
-            mMap.moveCamera(CameraUpdateFactory.newLatLng(latlng));
-            mMap.animateCamera(CameraUpdateFactory.zoomTo(13));
-        }
-
-        if (place != null) {
-            mMap.clear();
-            Log.d("onClick", "Button is Clicked");
-            if (mCurrLocationMarker != null) {
-                mCurrLocationMarker.remove();
-            }
-            String url = getUrl(latitude, longitude, place);
-            Object[] DataTransfer = new Object[2];
-            DataTransfer[0] = mMap;
-            DataTransfer[1] = url;
-            Log.d("onClick", url);
-            final GetNearbyPlacesData getNearbyPlacesData = new GetNearbyPlacesData();
-            getNearbyPlacesData.execute(DataTransfer);
-            mMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
-                @Override
-                public void onInfoWindowClick(Marker marker) {
-                    BusParser dp;
-                    dp = getNearbyPlacesData.mList.get(getNearbyPlacesData.mPubMarkerMap.get(marker));
-                    Intent intent = new Intent(getApplication(), DetailActivity.class);
-
-                    intent.putExtra("name", dp.getBus());
-//                    intent.putExtra("vicinity", dp.getVicinity());
-//                    intent.putExtra("rating", dp.getRating());
-
-                    startActivity(intent);
-                }
-            });
-        }
+        Log.d("Location: ", "Lat: " + latitude + ", Long: " + longitude);
     }
 
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
@@ -282,10 +243,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    private String getUrlText() {
+    private String getUrlText(String origin, String destination) {
         StringBuilder googlePlacesUrl = new StringBuilder("https://maps.googleapis.com/maps/api/directions/json?");
-        googlePlacesUrl.append("origin=Seattle");
-        googlePlacesUrl.append("&destination=RentonLanding");
+        googlePlacesUrl.append("origin=" + removeSpace(origin));
+        googlePlacesUrl.append("&destination=" + removeSpace(destination));
         googlePlacesUrl.append("&mode=transit");
         googlePlacesUrl.append("&key=" + "AIzaSyDoMVUGh6iGgKWautnSKitf2KpLGEM_oKM");
         Log.d("getUrl", googlePlacesUrl.toString());
@@ -293,56 +254,23 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private String removeSpace(String str) {
-        String returnStr;
-        return returnStr = str.replace(" ", "_");
+        return str.replace(" ", "_");
     }
 
     public void Search(View v) {
-        listOfWords.clear();
-        mMap.clear();
-        AsyncTask<String, Void, String> task = null;
-        mString = mEditText.getText().toString();
-        switch (v.getId()) {
-            case R.id.button:
-                task = new PostWebServiceTask();
-                task.execute(mURL);
-                break;
-            default:
-                throw new IllegalStateException("Not implemented");
-        }
         Log.d("onClick", "Button is Clicked");
-        if (mCurrLocationMarker != null) {
-            mCurrLocationMarker.remove();
-        }
-    }
+        mString = mEditText.getText().toString();
+        listOfWords.clear();
+//        mMap.clear();
+        AsyncTask<String, Void, String> task = new PostWebServiceTask();
 
-    private void display(String theLocation) {
-        String url = getUrlText();
-        Object[] DataTransfer = new Object[2];
-        DataTransfer[0] = mMap;
-        DataTransfer[1] = url;
-        Log.d("onClick", url);
-        final GetNearbyPlacesData getNearbyPlacesData = new GetNearbyPlacesData();
-        getNearbyPlacesData.execute(DataTransfer);
-        mMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
-            @Override
-            public void onInfoWindowClick(Marker marker) {
-                BusParser dp;
-                dp = getNearbyPlacesData.mList.get(getNearbyPlacesData.mPubMarkerMap.get(marker));
-                Intent intent = new Intent(getApplication(), DetailActivity.class);
-
-                intent.putExtra("name", dp.getBus());
-
-                startActivity(intent);
-            }
-        });
+        task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, mURL);
     }
 
     private class PostWebServiceTask extends AsyncTask<String, Void, String> {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-
         }
 
         @Override
@@ -372,7 +300,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 //Request Body
                 StringEntity reqEntity = new StringEntity("{\"language\" : \"en\",\n" +
                         "\t\"analyzerIds\" : [\"4fa79af1-f22c-408d-98bb-b7d7aeef7f04\", \"22a6b758-420f-4745-8a3c-46835a67c0d2\"],\n" +
-                        "\t\"text\" :" + "\""+ sent  +"\"}" );        //  \"I want to get pizza\" }");
+                        "\t\"text\" :" + "\""+ sent  +"\"}" );
                 request.setEntity(reqEntity);
 
 
@@ -400,14 +328,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         @Override
         protected void onPostExecute(String result) {
 
-            News news = null;
-
-            if (result.startsWith("Unable to")) {
-                Toast.makeText(getApplicationContext(), result, Toast.LENGTH_LONG)
-                        .show();
-                return;
-            }
-
             News[] newses = new News[0];
             try {
                 JSONArray value = new JSONArray(result);
@@ -427,15 +347,26 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 sb.append(tempNewses[i].getResult());
             }
 
-            Log.d("result", sb.toString());
             Log.d("The String", mString);
             StringTokenizer parseString = new StringTokenizer(mString, " ");
             while (parseString.hasMoreTokens()) {
-                listOfWords.add(parseString.nextToken());
+                String word = parseString.nextToken();
+                listOfWords.add(word);
             }
+
+            ArrayList<Integer> size = new ArrayList();
+
+            for (int i = 0; i < listOfWords.size(); i++) {
+                if (listOfWords.get(i).equals("from")) {
+                    origin = listOfWords.get(i+1);
+                    mOrigin.setText("Origin = " + origin);
+                } if (listOfWords.get(i).equals("to")) {
+                    destination = listOfWords.get(i+1);
+                }
+            }
+
             String tag = sb.toString().substring(2, sb.toString().length()-2);
             String[] tags = tag.split(",");
-            ArrayList<Integer> size = new ArrayList();
             String word = "";
             for (int i = 0; i < tags.length; i++) {
                 if (tags[i].equals("\"NN\"" )|| tags[i].equals("\"NNP\"") || tags[i].equals("\"NNS\"" )|| tags[i].equals("\"NNPS\""))
@@ -443,7 +374,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     Log.d("Index ", i + "");
                     Log.d("Word ", listOfWords.get(i));
                     word = word + " " +  listOfWords.get(i);
-                    size.add(i);
                 }
             }
 
@@ -452,11 +382,25 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 mFinal.append(listOfWords.get(size.get(i)));
             }
             // mTextView.setText(mFinal.toString());
-            mTextView.setText(sb.toString());
+            mTextView.setText("Tags = " + sb.toString());
             Log.d("Final Word is ", word);
-            display(word);
+//            destination = word;
+            mDestination.setText("Destination = " + destination);
+
+
+            String url = getUrlText(origin, destination);
+            Object[] DataTransfer = new Object[1];
+            DataTransfer[0] = url;
+            Log.d("onClick", url);
+
+            GetNearbyPlacesData getNearbyPlacesData = new GetNearbyPlacesData();
+//            if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.HONEYCOMB) {
+//                getNearbyPlacesData.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, DataTransfer);
+//            }
+//            else {
+//                getNearbyPlacesData.execute(DataTransfer);
+//            }
+            getNearbyPlacesData.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, DataTransfer);
         }
     }
-
-
 }
