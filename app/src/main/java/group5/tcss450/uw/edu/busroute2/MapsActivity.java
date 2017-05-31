@@ -18,11 +18,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -43,17 +39,10 @@ import java.util.StringTokenizer;
 
 public class MapsActivity extends AppCompatActivity{
 
-    private GoogleMap mMap;
-
-    private GoogleApiClient mGoogleApiClient;
-
     private double longitude, latitude;
-
-    private Marker mCurrLocationMarker;
 
     private static final String TAG = "LocationsActivity";
 
-    private LocationRequest mLocationRequest;
     private TextView mTextView;
     private TextView mOrigin;
     private TextView mDestination;
@@ -145,7 +134,6 @@ public class MapsActivity extends AppCompatActivity{
     /*
      * Requests the user for permission to use location.
      */
-
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         switch (requestCode) {
@@ -277,30 +265,28 @@ public class MapsActivity extends AppCompatActivity{
             ArrayList<Integer> size = new ArrayList();
 
             int to = 0;
+            int from = 0;
             for (int i = 0; i < listOfWords.size(); i++) {
-//                if (listOfWords.get(i).equals("from")) {
-//                    origin = listOfWords.get(i+1);
-//                    mOrigin.setText("Origin = " + origin);
-//                    from = i;
-//                }
+                if (listOfWords.get(i).equals("from")) {
+                    from = i;
+                }
                 if (listOfWords.get(i).equals("to")) {
-                    //destination = listOfWords.get(i+1);
                     to = i;
                 }
             }
 
             String tag = sb.toString().substring(2, sb.toString().length()-2);
             String[] tags = tag.split(",");
-            origin = Double.toString(latitude) + "," + Double.toString(longitude);
-
             destination = "";
-            if (!origin.equals(Double.toString(latitude) + "," + Double.toString(longitude))) {
+            if (from == 0) {
+                origin = Double.toString(latitude) + "," + Double.toString(longitude);
+            } else {
+                origin = "";
                 for (int i = 0; i < to; i++) {
-                    if (tags[i].equals("\"NN\"" )|| tags[i].equals("\"NNP\"") || tags[i].equals("\"NNS\"" )|| tags[i].equals("\"NNPS\""))
-                    {
+                    if (tags[i].equals("\"NN\"") || tags[i].equals("\"NNP\"") || tags[i].equals("\"NNS\"") || tags[i].equals("\"NNPS\"")) {
                         Log.d("Index ", i + "");
                         Log.d("Origin**", listOfWords.get(i));
-                        origin = origin + " " +  listOfWords.get(i);
+                        origin = origin + " " + listOfWords.get(i);
                     }
                 }
             }
@@ -311,7 +297,7 @@ public class MapsActivity extends AppCompatActivity{
                 {
                     Log.d("Index ", i + "");
                     Log.d("Destination**", listOfWords.get(i));
-                    destination = destination + " " +  listOfWords.get(i);
+                    destination = destination + " " + listOfWords.get(i);
                 }
             }
 
