@@ -1,12 +1,13 @@
 package group5.tcss450.uw.edu.busroute2;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Build;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
@@ -17,13 +18,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.model.Marker;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -42,27 +37,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
-public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback,
-        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener {
-
-    //Master Branch
-    private static final String Key_Search = "name";
-
-    private GoogleMap mMap;
-
-    private GoogleApiClient mGoogleApiClient;
+public class MapsActivity extends AppCompatActivity{
 
     private double longitude, latitude;
 
-    private Marker mCurrLocationMarker;
-
     private static final String TAG = "LocationsActivity";
-    private static final String KEY_DB = "DB";
 
-    private LocationRequest mLocationRequest;
-
-    String place;
-    String name;
     private TextView mTextView;
     private TextView mOrigin;
     private TextView mDestination;
@@ -92,77 +72,35 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             checkLocationPermission();
         }
 
-        place = getIntent().getStringExtra("type");
-        name = getIntent().getStringExtra("name");
-
         mTextView = (TextView) findViewById(R.id.Text_View);
         mOrigin = (TextView) findViewById(R.id.origin);
         mDestination = (TextView) findViewById(R.id.destination);
         mBusRoute = (TextView) findViewById(R.id.busRoutes);
         mEditText = (EditText) findViewById(R.id.search_field);
-    }
 
-    protected synchronized void buildGoogleApiClient() {
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .build();
-        mGoogleApiClient.connect();
-    }
+        // Acquire a reference to the system Location Manager
+        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
-        //Initialize Google Play Services
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (ContextCompat.checkSelfPermission(this,
-                    Manifest.permission.ACCESS_FINE_LOCATION)
-                    == PackageManager.PERMISSION_GRANTED) {
-                buildGoogleApiClient();
-                mMap.setMyLocationEnabled(true);
+        // Define a listener that responds to location updates
+        LocationListener locationListener = new LocationListener() {
+            public void onLocationChanged(Location location) {
+                // Called when a new location is found by the network location provider.
+                latitude = location. getLatitude();
+                longitude = location.getLongitude();
+
+                Log.d("Lat", latitude + "");
+                Log.d("Long", longitude + "");
             }
-        }
-        else {
-            buildGoogleApiClient();
-            mMap.setMyLocationEnabled(true);
-        }
-    }
 
-    @Override
-    public void onConnected(@Nullable Bundle bundle) {
-        mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(1000);
-        mLocationRequest.setFastestInterval(1000);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
-            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
-        }
-    }
+            public void onStatusChanged(String provider, int status, Bundle extras) {}
 
-    @Override
-    public void onConnectionSuspended(int i) {
-        Log.i(TAG, "Connection suspended");
-        mGoogleApiClient.connect();
-    }
+            public void onProviderEnabled(String provider) {}
 
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        Log.i(TAG, "Connection failed: ConnectionResult.getErrorCode() = " + connectionResult.getErrorCode());
-    }
+            public void onProviderDisabled(String provider) {}
+        };
 
-    @Override
-    public void onLocationChanged(Location location) {
-        if (mCurrLocationMarker != null) {
-            mCurrLocationMarker.remove();
-        }
-
-        Location lastLocation = new Location("Last Location");
-        lastLocation.setLatitude(latitude);
-        lastLocation.setLongitude(longitude);
-        Log.d("Location: ", "Lat: " + latitude + ", Long: " + longitude);
+        // Register the listener with the Location Manager to receive location updates
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
     }
 
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
@@ -196,7 +134,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     /*
      * Requests the user for permission to use location.
      */
-
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         switch (requestCode) {
@@ -211,11 +148,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     if (ContextCompat.checkSelfPermission(this,
                             Manifest.permission.ACCESS_FINE_LOCATION)
                             == PackageManager.PERMISSION_GRANTED) {
-
-                        if (mGoogleApiClient == null) {
-                            buildGoogleApiClient();
-                        }
-                        mMap.setMyLocationEnabled(true);
                     }
 
                 } else {
@@ -266,7 +198,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             //modified example code from microsoft
             try
             {
-
                 HttpEntity entity;
 
                 URIBuilder builder = new URIBuilder(mURL);
@@ -333,24 +264,40 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             ArrayList<Integer> size = new ArrayList();
 
+            int to = 0;
+            int from = 0;
             for (int i = 0; i < listOfWords.size(); i++) {
                 if (listOfWords.get(i).equals("from")) {
-                    origin = listOfWords.get(i+1);
-                    mOrigin.setText("Origin = " + origin);
-                } if (listOfWords.get(i).equals("to")) {
-                    destination = listOfWords.get(i+1);
+                    from = i;
+                }
+                if (listOfWords.get(i).equals("to")) {
+                    to = i;
                 }
             }
 
             String tag = sb.toString().substring(2, sb.toString().length()-2);
             String[] tags = tag.split(",");
-            String word = "";
-            for (int i = 0; i < tags.length; i++) {
+            destination = "";
+            if (from == 0) {
+                origin = Double.toString(latitude) + "," + Double.toString(longitude);
+            } else {
+                origin = "";
+                for (int i = 0; i < to; i++) {
+                    if (tags[i].equals("\"NN\"") || tags[i].equals("\"NNP\"") || tags[i].equals("\"NNS\"") || tags[i].equals("\"NNPS\"")) {
+                        Log.d("Index ", i + "");
+                        Log.d("Origin**", listOfWords.get(i));
+                        origin = origin + " " + listOfWords.get(i);
+                    }
+                }
+            }
+
+            mOrigin.setText("Origin = " + origin);
+            for (int i = to; i < tags.length; i++) {
                 if (tags[i].equals("\"NN\"" )|| tags[i].equals("\"NNP\"") || tags[i].equals("\"NNS\"" )|| tags[i].equals("\"NNPS\""))
                 {
                     Log.d("Index ", i + "");
-                    Log.d("Word ", listOfWords.get(i));
-                    word = word + " " +  listOfWords.get(i);
+                    Log.d("Destination**", listOfWords.get(i));
+                    destination = destination + " " + listOfWords.get(i);
                 }
             }
 
@@ -359,7 +306,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 mFinal.append(listOfWords.get(size.get(i)));
             }
             mTextView.setText("Tags = " + sb.toString());
-            Log.d("Final Word is ", word);
             mDestination.setText("Destination = " + destination);
 
 
@@ -373,7 +319,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    public static List<BusParser> mList;
+    private List<BusParser> mList;
     private String url;
     private String googlePlacesData;
 
@@ -410,10 +356,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 BusParser busRoute = busRoutesList.get(i);
                 mList.add(busRoute);
                 sb.append(busRoute.getBus());
-                sb.append(" ");
+                sb.append(", ");
                 Log.d("Bus Routes Maps", busRoute.getBus());
             }
-            mBusRoute.setText(sb.toString());
+
+            mBusRoute.setText("Bus Routes = " + sb.toString().substring(0, sb.length() - 2));
         }
     }
 }
