@@ -240,18 +240,18 @@ public class MapsActivity extends AppCompatActivity{
             try {
                 JSONArray value = new JSONArray(result);
                 newses = new News[value.length()];
-                for (int i = 0; i < value.length()-1; i++){
+                for (int i = 0; i < value.length() - 1; i++) {
                     JSONObject oneNews = (JSONObject) value.get(i);
                     newses[i] = new News(oneNews);
                 }
 
-            } catch (JSONException e){
+            } catch (JSONException e) {
                 e.printStackTrace();
             }
 
             final News[] tempNewses = newses;
             StringBuilder sb = new StringBuilder();
-            for(int i = 0; i< tempNewses.length - 1; i++) {
+            for (int i = 0; i < tempNewses.length - 1; i++) {
                 sb.append(tempNewses[i].getResult());
             }
 
@@ -275,32 +275,35 @@ public class MapsActivity extends AppCompatActivity{
                 }
             }
 
-            String tag = sb.toString().substring(2, sb.toString().length()-2);
+            String tag = sb.toString().substring(2, sb.toString().length() - 2);
             String[] tags = tag.split(",");
-            destination = "";
+            String fullOrigin;
+            String fullDes;
+            fullDes = "";
             if (from == 0) {
-                origin = Double.toString(latitude) + "," + Double.toString(longitude);
-            } else {
-                origin = "";
+                fullOrigin = Double.toString(latitude) + "," + Double.toString(longitude);
+            }else {
+                fullOrigin = "";
                 for (int i = 0; i < to; i++) {
                     if (tags[i].equals("\"NN\"") || tags[i].equals("\"NNP\"") || tags[i].equals("\"NNS\"") || tags[i].equals("\"NNPS\"")) {
                         Log.d("Index ", i + "");
                         Log.d("Origin**", listOfWords.get(i));
-                        origin = origin + " " + listOfWords.get(i);
+                        fullOrigin= fullOrigin + listOfWords.get(i) + " ";
                     }
                 }
             }
-
+            origin = fullOrigin.substring(0,fullOrigin.length()-1);
             mOrigin.setText("Origin = " + origin);
+
             for (int i = to; i < tags.length; i++) {
                 if (tags[i].equals("\"NN\"" )|| tags[i].equals("\"NNP\"") || tags[i].equals("\"NNS\"" )|| tags[i].equals("\"NNPS\""))
                 {
                     Log.d("Index ", i + "");
                     Log.d("Destination**", listOfWords.get(i));
-                    destination = destination + " " + listOfWords.get(i);
+                    fullDes = fullDes + listOfWords.get(i) + " ";
                 }
             }
-
+            destination = fullDes.substring(0,fullDes.length()-1);
             StringBuilder mFinal = new StringBuilder();
             for(int i = 0; i< size.size();i++ ) {
                 mFinal.append(listOfWords.get(size.get(i)));
